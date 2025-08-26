@@ -1,7 +1,10 @@
 <?php
 $dbh = new PDO('mysql:host=mysql;dbname=example_db', 'root', '');
+$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 if (isset($_POST['body'])) {
     $image_filename = null;
+
     if (isset($_FILES['image']) && !empty($_FILES['image']['tmp_name'])) {
         if (preg_match('/^image\//', mime_content_type($_FILES['image']['tmp_name'])) !== 1) {
             header("HTTP/1.1 302 Found");
@@ -14,18 +17,24 @@ if (isset($_POST['body'])) {
         $filepath = '/var/www/upload/image/' . $image_filename;
         move_uploaded_file($_FILES['image']['tmp_name'], $filepath);
     }
+
+    $reply_to = (isset($_POST['reply_to']) && $_POST['reply_to'] !== '') ? (int)$_POST['reply_to'] : null;
+
     $insert_sth = $dbh->prepare("INSERT INTO bbs_entries (body, image_filename, reply_to) VALUES (:body, :image_filename, :reply_to)");
     $insert_sth->execute([
         ':body' => $_POST['body'],
         ':image_filename' => $image_filename,
-        ':reply_to' => $_POST['reply_to'] ?? null
+        ':reply_to' => $reply_to
     ]);
+
     header("HTTP/1.1 302 Found");
     header("Location: ./bbsimagetest.php");
     return;
 }
-$select_sth = $dbh->prepare('SELECT * FROM bbs_entries ORDER BY created_at DESC');
-$select_sth->execute();
+
+$sth = $dbh->prepare('SELECT id, body, created_at, image_filename, reply_to FROM bbs_entries ORDER BY created_at DESC');
+$sth->execute();
+$entries = $sth->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -58,7 +67,7 @@ dd { margin:0 0 0.5em 0; }
 
 <hr>
 
-<?php foreach($select_sth as $entry): ?>
+<?php foreach($entries as $entry): ?>
   <dl id="post-<?= $entry['id'] ?>">
     <dt>No.</dt>
     <dd><?= $entry['id'] ?></dd>
@@ -75,10 +84,9 @@ dd { margin:0 0 0.5em 0; }
   </dl>
 <?php endforeach ?>
 
-
 <script>
 const imageInput = document.getElementById("imageInput");
-imageInput.addEventListener("change", (event) => {
+imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
   if (!file) return;
   const maxFileSize = 5 * 1024 * 1024;
@@ -117,3 +125,4 @@ document.querySelectorAll('.replyLink').forEach(link => {
 
 </body>
 </html>
+
