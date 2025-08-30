@@ -15,13 +15,13 @@
 ## ディレクトリ構成
 .
 
-├── Dockerfile
-├── docker-compose.yml
-├── nginx
-│ └── conf.d/default.conf
-├── public/
-│ └── bbsimagetest.php
-└── README.md
+├── Dockerfile  
+├── docker-compose.yml  
+├── nginx  
+│ └── conf.d/default.conf  
+├── public/  
+│ └── bbsimagetest.php  
+└── README.md  
 
 ---
 
