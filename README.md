@@ -19,10 +19,8 @@
 ├── docker-compose.yml
 ├── nginx
 │ └── conf.d/default.conf
-├── public
+├── public/
 │ └── bbsimagetest.php
-├── upload
-│ └── image/
 └── README.md
 
 ---
