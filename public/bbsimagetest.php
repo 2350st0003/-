@@ -36,7 +36,6 @@ $sth = $dbh->prepare('SELECT id, body, created_at, image_filename, reply_to FROM
 $sth->execute();
 $entries = $sth->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -49,32 +48,41 @@ textarea { width: 100%; box-sizing: border-box; min-height: 5em; margin-bottom:0
 button { padding: 0.5em 1em; margin-bottom: 1em; }
 img { max-width: 100%; height: auto; display:block; margin-top:0.5em; }
 dl { background: #f9f9f9; padding: 0.5em; border-radius: 5px; margin-bottom:1em; }
-dt { font-weight: bold; }
-dd { margin:0 0 0.5em 0; }
+.entryHeader { font-weight:bold; margin-bottom:0.5em; }
+.replyPreview { padding:0.5em; margin-bottom:0.5em; border-left:3px solid #00f; background:#eef; }
+#replyInfo { margin-bottom:0.5em; font-weight:bold; color:#007; }
 @media (max-width: 600px) { body { padding: 0.5em; } dl { font-size: 14px; } }
 </style>
 </head>
 <body>
 
 <form method="POST" action="./bbsimagetest.php" enctype="multipart/form-data" id="bbsForm">
+  <div id="replyInfo"></div>
   <input type="hidden" name="reply_to" id="replyTo">
   <textarea name="body" required placeholder="本文を入力"></textarea>
   <div>
     <input type="file" accept="image/*" name="image" id="imageInput">
   </div>
   <button type="submit">送信</button>
+  <button type="button" id="cancelReply">返信をキャンセル</button>
 </form>
 
 <hr>
 
 <?php foreach($entries as $entry): ?>
   <dl id="post-<?= $entry['id'] ?>">
-    <dt>No.</dt>
-    <dd><?= $entry['id'] ?></dd>
-    <dt>日時</dt>
-    <dd><?= $entry['created_at'] ?></dd>
-    <dt>内容</dt>
+    <div class="entryHeader">No. <?= $entry['id'] ?> | <?= $entry['created_at'] ?></div>
     <dd>
+      <?php 
+        if($entry['reply_to']) {
+          $reply_sth = $dbh->prepare('SELECT id, body FROM bbs_entries WHERE id = ?');
+          $reply_sth->execute([$entry['reply_to']]);
+          $reply_entry = $reply_sth->fetch(PDO::FETCH_ASSOC);
+          if($reply_entry){
+            echo '<div class="replyPreview">返信先 No.'.$reply_entry['id'].': '.htmlspecialchars(mb_strimwidth($reply_entry['body'],0,50,'…')).'</div>';
+          }
+        }
+      ?>
       <?= nl2br(htmlspecialchars($entry['body'])) ?>
       <?php if(!empty($entry['image_filename'])): ?>
         <img src="/image/<?= htmlspecialchars($entry['image_filename']) ?>">
@@ -89,7 +97,7 @@ const imageInput = document.getElementById("imageInput");
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
   if (!file) return;
-  const maxFileSize = 5 * 1024 * 1024;
+  const maxFileSize = 1 * 1024 * 1024;
   if (file.size <= maxFileSize) return;
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -113,13 +121,22 @@ imageInput.addEventListener("change", () => {
   reader.readAsDataURL(file);
 });
 
+const replyInfo = document.getElementById('replyInfo');
+const cancelReply = document.getElementById('cancelReply');
+
 document.querySelectorAll('.replyLink').forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
     const id = link.dataset.id;
     document.getElementById('replyTo').value = id;
+    replyInfo.textContent = '返信先: No.' + id;
     document.getElementById('bbsForm').scrollIntoView({ behavior: 'smooth' });
   });
+});
+
+cancelReply.addEventListener('click', () => {
+  document.getElementById('replyTo').value = '';
+  replyInfo.textContent = '';
 });
 </script>
 
