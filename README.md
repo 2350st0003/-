@@ -28,10 +28,10 @@
 ---
 
 ## 起動方法
-### 1. Docker Compose でコンテナを起動
+###  Docker Compose でコンテナを起動
 ```bash
 docker compose up -d
-2. ブラウザでアクセス
+ブラウザでアクセス
 
 データベース設定
 
@@ -51,12 +51,12 @@ CREATE TABLE `bbs_entries` (
 
 使用技術
 
-PHP 8.x
+PHP
 
-MySQL 8.x
+MySQL 
 
 Nginx
 
 Docker / Docker Compose
 
-HTML + CSS + JavaScript (Canvas APIで画像自動縮小)
+HTML + CSS + JavaScript 
